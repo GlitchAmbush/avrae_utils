@@ -1,0 +1,59 @@
+embed
+<drac2>
+# Varaibles
+args    = argparse(&ARGS&)
+ch      = character()
+out     = ""
+i       = args.get("i") # Ignores requirements
+c       = combat()
+cc_bi   = "Bardic Inspiration"
+cc_m    = "Mantle of Holiness"
+n       = name
+
+button = [
+    {
+        "automation":[
+            {
+                "type": "target",
+                "target": "self",
+                "effects": [
+                    {
+                        "type": "damage",
+                        "damage": "-{charismaMod} [magical healing]"
+                    }
+                ]
+            }
+        ],
+        "label": "Regenerate (Mantle)",
+        "verb": "is regenerating",
+        "style": 3
+    }
+]
+
+image = args.last('image', '')
+thumb = args.last('thumb', ch.image)
+
+# Get combatant name
+C       = c.get_combatant(n) if c else ""
+
+# Check if CC exists and get val
+v_bi    = (ch.cc_exists(cc_bi) and ch.get_cc(cc_bi) > 0 and ch.get_cc(cc_m) > 0) or i
+v_m     = (ch.cc_exists(cc_m) and ch.get_cc(cc_bi) > 0 and ch.get_cc(cc_m) > 0) or i
+
+# Remove Counters
+ch.mod_cc(cc_bi,-1) if v_bi and not i else ""
+ch.mod_cc(cc_m,-1) if v_m and not i else ""
+
+# Initiative Interaction
+if C and v_bi and v_m:
+    C.add_effect("Mantle of Holiness", duration=args.last("dur", 10), buttons=button, desc = "Shed bright light in a 10 ft. radius and dim light for an additional 10 ft.\n - Regain HP = CHA Mod at start of turn\n - Healing or restoritive spells w/ verbal component heal extra HP = Song of Rest dice\n - Damaging Bard spells deal extra Radiant damage = CHA Mod\n - Ends if knocked unconscious")
+    return f'-f "{C.name}|{str(C.get_effect("Mantle of Holiness")).splitlines()[0]}" '
+</drac2>
+
+-title "{{f'{name} {"wreathes themselves in a Mantle of Holiness" if v_bi and v_m else "tries to use Mantle of Holiness"}!'}}"
+-desc "{{"While transformed in this way, you gain the following benefits:\n- You shed bright light in a 10-foot radius and dim light for an additional 10 feet\n- You regain Hit Points equal to your Charisma modifier at the start of each of your turns\n- When you cast a spell with verbal spell components that restore hit points or removes a condition, the spell restores additional hit points equal to your Song of Rest die.\n- When you cast a Bard spell that deals damage, you deal extra radiant damage to one of the spell's damage rolls equal to your Charisma Modifier"}}"
+{{f""" -f "Bardic Inspiration{f" (-1)" if v_bi and v_m and not i else ""}|{character().cc_str(cc_bi) if character().cc_exists(cc_bi) else"*None*"}" """}}
+{{f""" -f "Mantle of Holiness{f" (-1)" if v_bi and v_m and not i else ""}|{character().cc_str(cc_m) if character().cc_exists(cc_m) else"*None*"}" """}}
+-footer "Bard | College of Gospel" -color <color>
+{{f"-image {image}" if image else ''}}
+{{f"-thumb {thumb}" if thumb else ''}}
